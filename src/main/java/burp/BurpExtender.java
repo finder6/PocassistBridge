@@ -41,7 +41,7 @@ public class BurpExtender implements IScannerCheck,IBurpExtender {
         IResponseInfo responseInfo = helpers.analyzeResponse(baseRequestResponse.getResponse());
         // 静态文件过滤
         for(String header : responseInfo.getHeaders()) {
-            if(header.startsWith("Last-Modified:") || header.startsWith("last-modified") || header.indexOf("max-age=") > 0)
+            if(header.startsWith("Last-Modified:") || header.startsWith("last-modified") || (header.indexOf("max-age=") > 0 && header.indexOf("max-age=0") == -1))
                 return null;
         }
         IRequestInfo requestInfo =  helpers.analyzeRequest(baseRequestResponse);
