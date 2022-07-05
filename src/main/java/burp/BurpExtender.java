@@ -19,6 +19,7 @@ public class BurpExtender implements IScannerCheck,IBurpExtender {
     private PrintWriter stderr;
     private ScannedCache scannedCache;
     private ForwardBridge forwardBridge;
+    private String[] staticSuffix = {".js",".gif",".jpg",".png",".css",".json",".woff"};
 
     public void registerExtenderCallbacks(IBurpExtenderCallbacks callbacks) {
         this.callbacks = callbacks;
@@ -38,13 +39,21 @@ public class BurpExtender implements IScannerCheck,IBurpExtender {
     }
 
     public List<IScanIssue> doPassiveScan(IHttpRequestResponse baseRequestResponse) {
+        IRequestInfo requestInfo = helpers.analyzeRequest(baseRequestResponse);
         IResponseInfo responseInfo = helpers.analyzeResponse(baseRequestResponse.getResponse());
+        // 后缀过滤 js,gif,jpg,png,css,json,woff
+        for(String suffix : staticSuffix) {
+            if(requestInfo.getUrl().getPath().endsWith(suffix)) {
+                return null;
+            }
+        }
+
         // 静态文件过滤
         for(String header : responseInfo.getHeaders()) {
             if(header.startsWith("Last-Modified:") || header.startsWith("last-modified:") || ((header.indexOf("Cache-Control:") > 0 && header.indexOf("max-age=") > 0 && header.indexOf("max-age=0") == -1)))
                 return null;
         }
-        IRequestInfo requestInfo =  helpers.analyzeRequest(baseRequestResponse);
+
         String method = requestInfo.getMethod();
         URL url = requestInfo.getUrl();
         String urlFinger = method + url.getHost() + ":" + url.getPort() + url.getPath() + "^" + requestInfo.getParameters().size();
